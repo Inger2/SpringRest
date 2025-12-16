@@ -13,12 +13,12 @@ public class LoanController {
     private UserService userService;
 
     @Autowired
-    public void setUserService(UserService userService) {
+    public LoanController(UserService userService) {
         this.userService = userService;
     }
 
     @GetMapping("/loan")
-    public BigDecimal loan(@RequestParam(value = "userId", required = false) Integer id) {
+    public BigDecimal loan(@RequestParam(value = "userId") Integer id) {
         return userService.approveLoanById(id);
     }
 }

@@ -4,13 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import rest.model.Car;
 import rest.model.User;
 import rest.repository.CarDao;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -34,18 +31,36 @@ public class UserServiceImpl implements UserService {
         this.carDao = carDao;
     }
 
-    public List<User> getUsers() {
-        User[] user = restTemplate.getForObject(url, User[].class);
-        List<Car> cars = carDao.getCars();
-        assert user != null;
-        for (int i = 0; i < user.length; i++) {
-            user[i].setCar(cars.get(i));
-            cars.get(i).setUser(user[i]);
+    public BigDecimal approveLoanById(int id) {
+        User user = linkUserWithCar(id);
+        if (loanApprovalConditions(user)) {
+            return loanSum(user);
+        } else {
+            return BigDecimal.ZERO;
         }
-        return Arrays.asList(user);
+
     }
 
-    public BigDecimal validateUser(User user) {
+    private boolean loanApprovalConditions(User user) {
+        BigDecimal validatedIncome = retrieveUser(user);
+        return validatedIncome.compareTo(minIncome) > 0 || user.getCar().getPrice().compareTo(minCarPrice) > 0;
+    }
+
+    private BigDecimal loanSum(User user) {
+        BigDecimal validatedIncome = retrieveUser(user);
+        BigDecimal yearlyIncome = validatedIncome.multiply(BigDecimal.valueOf(12));
+        BigDecimal loanSum;
+        if (yearlyIncome.multiply(maxIncomePercentage)
+                .compareTo(user.getCar().getPrice().multiply(maxCarPricePercentage)) < 0) {
+            loanSum = yearlyIncome.multiply(maxIncomePercentage);
+        } else {
+            loanSum = user.getCar().getPrice().multiply(maxCarPricePercentage);
+        }
+        return loanSum;
+
+    }
+
+    private BigDecimal retrieveUser(User user) {
         if (user.getIncome() == null) {
             return BigDecimal.valueOf(0);
         } else {
@@ -53,48 +68,18 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    public boolean loanApprovalConditions(User user) {
-        BigDecimal validatedIncome = validateUser(user);
-        return validatedIncome.compareTo(minIncome) > 0 || user.getCar().getPrice().compareTo(minCarPrice) > 0;
+    private User linkUserWithCar(int id) {
+        User user = getUser(id);
+        user.setCar(carDao.getCar(id));
+        return user;
     }
 
-    public BigDecimal loanSum(User user) {
-        BigDecimal validatedIncome = validateUser(user);
-        BigDecimal yearlyIncome = validatedIncome.multiply(BigDecimal.valueOf(12));
-        BigDecimal loanSum;
-        if (yearlyIncome.multiply(maxIncomePercentage)
-                .compareTo(user.getCar().getPrice().multiply(maxCarPricePercentage)) < 0) {
-            loanSum = yearlyIncome.multiply(maxIncomePercentage);
-            return loanSum;
-        } else {
-            loanSum = user.getCar().getPrice().multiply(maxCarPricePercentage);
-            return loanSum;
-        }
-
+    private User getUser(int id) {
+        String userUrl = url + "?id=" + id;
+        User[] user = restTemplate.getForObject(userUrl, User[].class);
+        assert user != null;
+        return user[0];
     }
 
-    User getUserById(int id) {
-        List<User> users = getUsers();
-        for (User user : users) {
-            if (user.getId() == id) {
-                return user;
-            }
-        }
-        return null;
-    }
 
-    public BigDecimal approveLoan(User user) {
-        if (loanApprovalConditions(user)) {
-            return loanSum(user);
-        } else {
-            return BigDecimal.ZERO;
-        }
-    }
-
-    public BigDecimal approveLoanById(int id) {
-        User user = getUserById(id);
-        return approveLoan(user);
-
-
-    }
 }

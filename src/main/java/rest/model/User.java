@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 @Table(name = "car_user")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     private BigDecimal income;
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
