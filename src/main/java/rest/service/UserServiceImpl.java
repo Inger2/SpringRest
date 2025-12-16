@@ -42,12 +42,12 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean loanApprovalConditions(User user) {
-        BigDecimal validatedIncome = retrieveUser(user);
+        BigDecimal validatedIncome = retrieveUserIncome(user);
         return validatedIncome.compareTo(minIncome) > 0 || user.getCar().getPrice().compareTo(minCarPrice) > 0;
     }
 
     private BigDecimal loanSum(User user) {
-        BigDecimal validatedIncome = retrieveUser(user);
+        BigDecimal validatedIncome = retrieveUserIncome(user);
         BigDecimal yearlyIncome = validatedIncome.multiply(BigDecimal.valueOf(12));
         BigDecimal loanSum;
         if (yearlyIncome.multiply(maxIncomePercentage)
@@ -60,7 +60,7 @@ public class UserServiceImpl implements UserService {
 
     }
 
-    private BigDecimal retrieveUser(User user) {
+    private BigDecimal retrieveUserIncome(User user) {
         if (user.getIncome() == null) {
             return BigDecimal.valueOf(0);
         } else {
