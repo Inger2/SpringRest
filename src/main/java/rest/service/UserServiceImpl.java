@@ -38,10 +38,14 @@ public class UserServiceImpl implements UserService {
 
     private boolean loanApprovalConditions(User user) {
         BigDecimal retrieveUserIncome = retrieveUserIncome(user);
+        BigDecimal minimalIncome = loanConfig.getMinimalIncome();
+        BigDecimal minimalCarPrice = loanConfig.getMinimalCarPrice();
+
+
         return retrieveUserIncome
-                .compareTo(loanConfig.getMinimalIncome()) > 0 ||
+                .compareTo(minimalIncome) > 0 ||
                 user.getCar().getPrice()
-                        .compareTo(loanConfig.getMinimalCarPrice()) > 0;
+                        .compareTo(minimalCarPrice) > 0;
 
     }
 
