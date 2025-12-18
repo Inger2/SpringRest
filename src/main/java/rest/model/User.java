@@ -8,7 +8,6 @@ import java.math.BigDecimal;
 @Table(name = "car_user")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     private BigDecimal income;
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
@@ -46,7 +45,6 @@ public class User {
     public void setCar(Car car) {
         this.car = car;
         car.setUser(this);
-        id = car.getId();
     }
 
     @Override

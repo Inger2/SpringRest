@@ -7,5 +7,7 @@ import rest.model.Car;
 public interface CarDao {
     void add(Car car);
 
-    Car getCar(int id);
+    Car getCarByKey(int keyId);
+
+    Car getCarById(int id);
 }

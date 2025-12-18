@@ -1,38 +1,33 @@
 package rest.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
+import rest.config.LoanConfig;
+import rest.model.Car;
 import rest.model.User;
 import rest.repository.CarDao;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
-    private final RestTemplate restTemplate;
+    private final CarDao carDao;
+    private final LoanConfig loanConfig;
+    private final UserClient userClient;
 
-    @Value("${url}")
-    private String url;
-    @Value("${loan.minimalIncome}")
-    private BigDecimal minIncome;
-    @Value("${loan.minimalCarPrice}")
-    private BigDecimal minCarPrice;
-    @Value("${loan.maxLoanByIncomePercentage}")
-    private BigDecimal maxIncomePercentage;
-    @Value("${loan.maxLoanByCarPricePercentage}")
-    private BigDecimal maxCarPricePercentage;
-    private CarDao carDao;
 
     @Autowired
-    public UserServiceImpl(RestTemplate restTemplate, CarDao carDao) {
-        this.restTemplate = restTemplate;
+    public UserServiceImpl(CarDao carDao, LoanConfig loanConfig, UserClient userClient) {
         this.carDao = carDao;
+        this.loanConfig = loanConfig;
+        this.userClient = userClient;
     }
 
-    public BigDecimal approveLoanById(int id) {
-        User user = linkUserWithCar(id);
+    public BigDecimal approveLoanById(int userId) {
+        User user = getCarByKey(userId);
         if (loanApprovalConditions(user)) {
             return loanSum(user);
         } else {
@@ -42,22 +37,23 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean loanApprovalConditions(User user) {
-        BigDecimal validatedIncome = retrieveUserIncome(user);
-        return validatedIncome.compareTo(minIncome) > 0 || user.getCar().getPrice().compareTo(minCarPrice) > 0;
+        BigDecimal retrieveUserIncome = retrieveUserIncome(user);
+        return retrieveUserIncome
+                .compareTo(loanConfig.getMinimalIncome()) > 0 ||
+                user.getCar().getPrice()
+                        .compareTo(loanConfig.getMinimalCarPrice()) > 0;
+
     }
 
     private BigDecimal loanSum(User user) {
-        BigDecimal validatedIncome = retrieveUserIncome(user);
-        BigDecimal yearlyIncome = validatedIncome.multiply(BigDecimal.valueOf(12));
-        BigDecimal loanSum;
-        if (yearlyIncome.multiply(maxIncomePercentage)
-                .compareTo(user.getCar().getPrice().multiply(maxCarPricePercentage)) < 0) {
-            loanSum = yearlyIncome.multiply(maxIncomePercentage);
-        } else {
-            loanSum = user.getCar().getPrice().multiply(maxCarPricePercentage);
-        }
-        return loanSum;
+        BigDecimal retrieveUserIncome = retrieveUserIncome(user);
+        BigDecimal yearlyIncome = retrieveUserIncome.multiply(BigDecimal.valueOf(12));
+        BigDecimal yearlyIncomeLoanPercentage = yearlyIncome
+                .multiply(loanConfig.getMaxLoanByIncomePercentage());
+        BigDecimal carPriceLoanPercentage = user.getCar().getPrice()
+                .multiply(loanConfig.getMaxLoanByCarPricePercentage());
 
+        return yearlyIncomeLoanPercentage.min(carPriceLoanPercentage);
     }
 
     private BigDecimal retrieveUserIncome(User user) {
@@ -68,17 +64,24 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private User linkUserWithCar(int id) {
-        User user = getUser(id);
-        user.setCar(carDao.getCar(id));
+
+    private User getCarByKey(int userId) {
+        User user = getUser(userId);
+        Car car = carDao.getCarByKey(userId);
+        car.setUser(user);
+        user.setCar(car);
         return user;
     }
 
-    private User getUser(int id) {
-        String userUrl = url + "?id=" + id;
-        User[] user = restTemplate.getForObject(userUrl, User[].class);
-        assert user != null;
-        return user[0];
+    private User getUser(int userId) {
+        List<User> user;
+        user = userClient.getUserById(userId);
+        if (user != null && !user.isEmpty()) {
+            return user.get(0);
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
     }
 
 
