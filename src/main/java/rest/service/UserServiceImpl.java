@@ -40,8 +40,6 @@ public class UserServiceImpl implements UserService {
         BigDecimal retrieveUserIncome = retrieveUserIncome(user);
         BigDecimal minimalIncome = loanConfig.getMinimalIncome();
         BigDecimal minimalCarPrice = loanConfig.getMinimalCarPrice();
-
-
         return retrieveUserIncome
                 .compareTo(minimalIncome) > 0 ||
                 user.getCar().getPrice()
@@ -56,7 +54,6 @@ public class UserServiceImpl implements UserService {
                 .multiply(loanConfig.getMaxLoanByIncomePercentage());
         BigDecimal carPriceLoanPercentage = user.getCar().getPrice()
                 .multiply(loanConfig.getMaxLoanByCarPricePercentage());
-
         return yearlyIncomeLoanPercentage.min(carPriceLoanPercentage);
     }
 
