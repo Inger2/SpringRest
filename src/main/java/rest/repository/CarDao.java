@@ -9,5 +9,4 @@ public interface CarDao {
 
     Car getCarByKey(int keyId);
 
-    Car getCarById(int id);
 }

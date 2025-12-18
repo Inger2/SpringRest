@@ -1,7 +1,6 @@
 package rest.repository;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import rest.model.Car;
@@ -22,14 +21,5 @@ public class CarDaoImpl implements CarDao {
                 .getSingleResult();
     }
 
-    public Car getCarById(int id) {
-        try {
-            return em.createQuery("FROM Car c WHERE id=:id", Car.class)
-                    .setParameter("id", id)
-                    .getSingleResult();
-        } catch (NoResultException e) {
-            return null;
-        }
-    }
 
 }
