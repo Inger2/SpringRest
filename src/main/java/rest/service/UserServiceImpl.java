@@ -16,14 +16,14 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
     private final CarDao carDao;
     private final LoanConfig loanConfig;
-    private final UserClient userClient;
+    private final IncomeClient incomeClient;
 
 
     @Autowired
-    public UserServiceImpl(CarDao carDao, LoanConfig loanConfig, UserClient userClient) {
+    public UserServiceImpl(CarDao carDao, LoanConfig loanConfig, IncomeClient incomeClient) {
         this.carDao = carDao;
         this.loanConfig = loanConfig;
-        this.userClient = userClient;
+        this.incomeClient = incomeClient;
     }
 
     public BigDecimal approveLoanById(int userId) {
@@ -76,7 +76,7 @@ public class UserServiceImpl implements UserService {
 
     private User getUser(int userId) {
         List<User> user;
-        user = userClient.getUserById(userId);
+        user = incomeClient.getUserById(userId);
         if (user != null && !user.isEmpty()) {
             return user.get(0);
         } else {

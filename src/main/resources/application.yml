@@ -8,9 +8,21 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-url: https://66055cd12ca9478ea1801f2e.mockapi.io/api/users/income
+custom:
+  starter:
+    url: "https://66055cd12ca9478ea1801f2e.mockapi.io/api/users/income"
 loan:
   minimalIncome: 40000
   minimalCarPrice: 1000000
   maxLoanByIncomePercentage: 0.5
   maxLoanByCarPricePercentage: 0.3
+logging:
+  level:
+    logging:
+      level:
+        rest:
+          model:
+            service:
+              IncomeClient=DEBUG:
+        feign=DEBUG:
+
